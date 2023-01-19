@@ -717,14 +717,37 @@ DECLARE_SOA_COLUMN(TimeZNA, timeZNA, float);                    //!
 DECLARE_SOA_COLUMN(TimeZNC, timeZNC, float);                    //!
 DECLARE_SOA_COLUMN(TimeZPA, timeZPA, float);                    //!
 DECLARE_SOA_COLUMN(TimeZPC, timeZPC, float);                    //!
+DECLARE_SOA_COLUMN(AmplitudeZEM1, amplitudeZEM1, float);        //!
+DECLARE_SOA_COLUMN(AmplitudeZEM2, amplitudeZEM2, float);        //!
+DECLARE_SOA_COLUMN(AmplitudeZNA, amplitudeZNA, float);          //!
+DECLARE_SOA_COLUMN(AmplitudeZNC, amplitudeZNC, float);          //!
+DECLARE_SOA_COLUMN(AmplitudeZPA, amplitudeZPA, float);          //!
+DECLARE_SOA_COLUMN(AmplitudeZPC, amplitudeZPC, float);          //!
+DECLARE_SOA_COLUMN(Energy, energy, std::vector<float>);         //! Energy of non-zero channels. The channel IDs are given in ChannelE (at the same index)
+DECLARE_SOA_COLUMN(ChannelE, channelE, std::vector<uint8_t>);   //! Channel IDs which have reconstructed energy. There are at maximum 26 channels.
+DECLARE_SOA_COLUMN(Amplitude, amplitude, std::vector<float>);   //! Amplitudes of non-zero channels. The channel IDs are given in ChannelT (at the same index)
+DECLARE_SOA_COLUMN(Time, time, std::vector<float>);             //! Times of non-zero channels. The channel IDs are given in ChannelT (at the same index)
+DECLARE_SOA_COLUMN(ChannelT, channelT, std::vector<uint8_t>);   //! Channel IDs which had non-zero amplitudes. There are at maximum 26 channels.
 } // namespace zdc
 
-DECLARE_SOA_TABLE(Zdcs, "AOD", "ZDC", //! ZDC information
+DECLARE_SOA_TABLE(Zdcs, "AOD", "ZDC", //! ZDC information, Run 2 format, to be preprocessed via ZDC converter
                   o2::soa::Index<>, zdc::BCId, zdc::EnergyZEM1, zdc::EnergyZEM2,
                   zdc::EnergyCommonZNA, zdc::EnergyCommonZNC, zdc::EnergyCommonZPA, zdc::EnergyCommonZPC,
                   zdc::EnergySectorZNA, zdc::EnergySectorZNC, zdc::EnergySectorZPA, zdc::EnergySectorZPC,
                   zdc::TimeZEM1, zdc::TimeZEM2, zdc::TimeZNA, zdc::TimeZNC, zdc::TimeZPA, zdc::TimeZPC);
 using Zdc = Zdcs::iterator;
+
+DECLARE_SOA_TABLE(ZdcsRun3, "AOD", "ZDCRUN3", //! ZDC information, Run 3 format, to be preprocessed via ZDC converter
+                  o2::soa::Index<>, zdc::BCId, zdc::Energy, zdc::ChannelE, zdc::Amplitude, zdc::Time, zdc::ChannelT); //
+using ZdcRun3 = ZdcsRun3::iterator;
+
+DECLARE_SOA_TABLE(ZdcsAnalysis, "AOD", "ZDCANALYSIS", //! ZDC information for the user, provided by ZDC converter
+                  o2::soa::Index<>, zdc::BCId, zdc::EnergyZEM1, zdc::EnergyZEM2,
+                  zdc::EnergyCommonZNA, zdc::EnergyCommonZNC, zdc::EnergyCommonZPA, zdc::EnergyCommonZPC,
+                  zdc::EnergySectorZNA, zdc::EnergySectorZNC, zdc::EnergySectorZPA, zdc::EnergySectorZPC,
+                  zdc::TimeZEM1, zdc::TimeZEM2, zdc::TimeZNA, zdc::TimeZNC, zdc::TimeZPA, zdc::TimeZPC,
+                  zdc::AmplitudeZEM1, zdc::AmplitudeZEM2, zdc::AmplitudeZNA, zdc::AmplitudeZNC, zdc::AmplitudeZPA, zdc::AmplitudeZPC);
+using ZdcAnalysis = ZdcsAnalysis::iterator;
 
 namespace fv0a
 {
