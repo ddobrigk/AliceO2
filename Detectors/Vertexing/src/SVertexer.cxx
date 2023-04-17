@@ -828,30 +828,32 @@ int SVertexer::check3bodyDecays(float rv0, std::array<float, 3> pV0, float p2V0,
       continue;
     }
     // Consider Hypertriton
-    auto& candidate3B = m3bodyTmp[ithread].emplace_back(PID::HyperTriton, vertexXYZ, p3B, fitter3body.calcPCACovMatrixFlat(cand3B), tr0, tr1, tr2, v0.getProngID(0), v0.getProngID(1), bach.gid);
-    o2::track::TrackParCov trc = candidate3B;
+    auto& candidate3BHypertriton = o2::vertexing::SVertexer::DecayNbody(PID::HyperTriton, vertexXYZ, p3B, fitter3body.calcPCACovMatrixFlat(cand3B), tr0, tr1, tr2, v0.getProngID(0), v0.getProngID(1), bach.gid);
+    auto& candidate3BHyperhelium4 = o2::vertexing::SVertexer::DecayNbody(PID::Hyperhelium4, vertexXYZ, p3B, fitter3body.calcPCACovMatrixFlat(cand3B), tr0, tr1, tr2, v0.getProngID(0), v0.getProngID(1), bach.gid);
+    o2::track::TrackParCov trc3BHypertriton = candidate3BHypertriton;
+    o2::track::TrackParCov trc3BHyperhelium4 = candidate3BHyperhelium4;
     o2::dataformats::DCA dca;
-    if (!trc.propagateToDCA(decay3bodyPv, fitter3body.getBz(), &dca, 5.) ||
+    bool ok3BHypertriton = true; 
+    bool ok3BHyperhelium4 = true; 
+
+    // check hypertriton hypothesis DCA (charge one)
+    if (!trc3BHypertriton.propagateToDCA(decay3bodyPv, fitter3body.getBz(), &dca, 5.) ||
         std::abs(dca.getY()) > mSVParams->maxDCAXY3Body || std::abs(dca.getZ()) > mSVParams->maxDCAZ3Body) {
-      m3bodyTmp[ithread].pop_back();
-      continue;
+      ok3BHypertriton = false;
     }
+
+    // consider Hyperhelium4 (charge two)
+    if (!trc3BHyperhelium4.propagateToDCA(decay3bodyPv, fitter3body.getBz(), &dca, 5.) ||
+        std::abs(dca.getY()) > mSVParams->maxDCAXY3Body || std::abs(dca.getZ()) > mSVParams->maxDCAZ3Body) {
+      ok3BHyperhelium4 = false;
+    }
+    if (!ok3BHypertriton && !ok3BHyperhelium4) continue; 
+
+    auto& candidate3B = m3bodyTmp[ithread].emplace_back(PID::Hypertriton, vertexXYZ, p3B, fitter3body.calcPCACovMatrixFlat(cand3B), tr0, tr1, tr2, v0.getProngID(0), v0.getProngID(1), bach.gid);
+
     candidate3B.setCosPA(bestCosPA);
     candidate3B.setVertexID(decay3bodyVtxID);
     candidate3B.setDCA(fitter3body.getChi2AtPCACandidate());
-
-    // Consider Hyperhelium4
-    auto& candidateHyHe4 = m3bodyTmp[ithread].emplace_back(PID::Hyperhelium4, vertexXYZ, p3B, fitter3body.calcPCACovMatrixFlat(cand3B), tr0, tr1, tr2, v0.getProngID(0), v0.getProngID(1), bach.gid);
-    o2::track::TrackParCov trcHyHe4 = candidateHyHe4;
-    if (!trcHyHe4.propagateToDCA(decay3bodyPv, fitter3body.getBz(), &dca, 5.) ||
-        std::abs(dca.getY()) > mSVParams->maxDCAXY3Body || std::abs(dca.getZ()) > mSVParams->maxDCAZ3Body) {
-      m3bodyTmp[ithread].pop_back();
-      continue;
-    }
-    candidateHyHe4.setCosPA(bestCosPA);
-    candidateHyHe4.setVertexID(decay3bodyVtxID);
-    candidateHyHe4.setDCA(fitter3body.getChi2AtPCACandidate());
-
   }
   return m3bodyTmp[ithread].size() - n3BodyIni;
 }
