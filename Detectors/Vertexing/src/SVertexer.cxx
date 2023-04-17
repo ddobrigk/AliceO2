@@ -181,6 +181,9 @@ void SVertexer::updateTimeDependentParams()
   m3bodyHyps[Hyp3body::H3L3body].set(PID::HyperTriton, PID::Proton, PID::Pion, PID::Deuteron, mSVParams->pidCutsH3L3body, bz);
   m3bodyHyps[Hyp3body::AntiH3L3body].set(PID::HyperTriton, PID::Pion, PID::Proton, PID::Deuteron, mSVParams->pidCutsH3L3body, bz);
 
+  m3bodyHyps[Hyp3body::He4L3body].set(PID::Hyperhelium4, PID::Proton, PID::Pion, PID::Deuteron, mSVParams->pidCutsHe4L3body, bz);
+  m3bodyHyps[Hyp3body::AntiHe4L3body].set(PID::Hyperhelium4, PID::Pion, PID::Proton, PID::Deuteron, mSVParams->pidCutsHe4L3body, bz);
+
   for (auto& ft : mFitterV0) {
     ft.setBz(bz);
   }
@@ -815,7 +818,7 @@ int SVertexer::check3bodyDecays(float rv0, std::array<float, 3> pV0, float p2V0,
     float pt3B = std::sqrt(pt2candidate);
 
     bool goodHyp = false;
-    for (int ipid = 0; ipid < 2; ipid++) { // TODO: expand this loop to cover all the 3body cases if (m3bodyHyps[ipid].check(sqP0, sqP1, sqP2, sqPtot, pt3B))
+    for (int ipid = 0; ipid < 4; ipid++) { // TODO: expand this loop to cover all the 3body cases if (m3bodyHyps[ipid].check(sqP0, sqP1, sqP2, sqPtot, pt3B))
       if (m3bodyHyps[ipid].check(sqP0, sqP1, sqP2, p2candidate, pt3B)) {
         goodHyp = true;
         break;
@@ -824,6 +827,7 @@ int SVertexer::check3bodyDecays(float rv0, std::array<float, 3> pV0, float p2V0,
     if (!goodHyp) {
       continue;
     }
+    // Consider Hypertriton
     auto& candidate3B = m3bodyTmp[ithread].emplace_back(PID::HyperTriton, vertexXYZ, p3B, fitter3body.calcPCACovMatrixFlat(cand3B), tr0, tr1, tr2, v0.getProngID(0), v0.getProngID(1), bach.gid);
     o2::track::TrackParCov trc = candidate3B;
     o2::dataformats::DCA dca;
@@ -832,10 +836,22 @@ int SVertexer::check3bodyDecays(float rv0, std::array<float, 3> pV0, float p2V0,
       m3bodyTmp[ithread].pop_back();
       continue;
     }
-
     candidate3B.setCosPA(bestCosPA);
     candidate3B.setVertexID(decay3bodyVtxID);
     candidate3B.setDCA(fitter3body.getChi2AtPCACandidate());
+
+    // Consider Hyperhelium4
+    auto& candidateHyHe4 = m3bodyTmp[ithread].emplace_back(PID::Hyperhelium4, vertexXYZ, p3B, fitter3body.calcPCACovMatrixFlat(cand3B), tr0, tr1, tr2, v0.getProngID(0), v0.getProngID(1), bach.gid);
+    o2::track::TrackParCov trcHyHe4 = candidateHyHe4;
+    if (!trcHyHe4.propagateToDCA(decay3bodyPv, fitter3body.getBz(), &dca, 5.) ||
+        std::abs(dca.getY()) > mSVParams->maxDCAXY3Body || std::abs(dca.getZ()) > mSVParams->maxDCAZ3Body) {
+      m3bodyTmp[ithread].pop_back();
+      continue;
+    }
+    candidateHyHe4.setCosPA(bestCosPA);
+    candidateHyHe4.setVertexID(decay3bodyVtxID);
+    candidateHyHe4.setDCA(fitter3body.getChi2AtPCACandidate());
+
   }
   return m3bodyTmp[ithread].size() - n3BodyIni;
 }
