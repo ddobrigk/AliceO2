@@ -427,6 +427,8 @@ bool SVertexer::acceptTrack(GIndex gid, const o2::track::TrackParCov& trc) const
 //__________________________________________________________________
 void SVertexer::buildT2V(const o2::globaltracking::RecoContainer& recoData) // accessor to various tracks
 {
+  uint32_t nWithTPC = 0, nProton = 0;
+
   // build track->vertices from vertices->tracks, rejecting vertex contributors if requested
   auto trackIndex = recoData.getPrimaryVertexMatchedTracks(); // Global ID's for associated tracks
   auto vtxRefs = recoData.getPrimaryVertexMatchedTrackRefs(); // references from vertex to these track IDs
@@ -486,6 +488,7 @@ void SVertexer::buildT2V(const o2::globaltracking::RecoContainer& recoData) // a
       auto tpcGID = recoData.getTPCContributorGID(tvid);
       if (tpcGID.isIndexSet() && isTPCloaded) {
         hasTPC = true;
+        nWithTPC++;
         auto& tpcTrack = recoData.getTPCTrack(tpcGID);
         float dEdxTPC = tpcTrack.getdEdx().dEdxTotTPC;
         if (dEdxTPC > mSVParams->minTPCdEdx && trc.getP() > mSVParams->minMomTPCdEdx) // accept high dEdx tracks (He3, He4)
@@ -497,6 +500,7 @@ void SVertexer::buildT2V(const o2::globaltracking::RecoContainer& recoData) // a
         float fracDevProton = std::abs((dEdxTPC - dEdxExpected) / dEdxExpected);
         if (fracDevProton < mSVParams->mFractiondEdxforCascBaryons) {
           compatibleWithProton = true;
+          nProton++;
         }
       }
 
@@ -546,6 +550,7 @@ void SVertexer::buildT2V(const o2::globaltracking::RecoContainer& recoData) // a
   }
 
   LOG(info) << "Collected " << mTracksPool[POS].size() << " positive and " << mTracksPool[NEG].size() << " negative seeds";
+  LOG(info) << "Collected " << nWithTPC << " tracks with TPC signals and " << nProton << " compatible with broad proton dE/dx band";
 }
 
 //__________________________________________________________________
@@ -611,7 +616,7 @@ bool SVertexer::checkV0(const TrackCand& seedP, const TrackCand& seedN, int iP, 
     if (mV0Hyps[Lambda].checkTight(p2Pos, p2Neg, p2V0, ptV0) && (!mSVParams->mRequireTPCforCascBaryons || seedP.hasTPC) && seedP.compatibleProton) {
       goodLamForCascade = true;
     }
-    if (mV0Hyps[AntiLambda].checkTight(p2Pos, p2Neg, p2V0, ptV0) && (!mSVParams->mRequireTPCforCascBaryons || seedN.hasTPC && seedN.compatibleProton)) {
+    if (mV0Hyps[AntiLambda].checkTight(p2Pos, p2Neg, p2V0, ptV0) && (!mSVParams->mRequireTPCforCascBaryons || seedN.hasTPC) && seedN.compatibleProton) {
       goodALamForCascade = true;
     }
   }
