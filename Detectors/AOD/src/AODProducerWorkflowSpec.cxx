@@ -501,7 +501,7 @@ void AODProducerWorkflowDPL::fillTrackTablesPerCollision(int collisionID,
           static std::uniform_real_distribution<> distr(0., 1.);
           bool writeQAData = o2::math_utils::Tsallis::downsampleTsallisCharged(data.getTrackParam(trackIndex).getPt(), mTrackQCFraction, mSqrtS, weight, distr(mGenerator));
           auto extraInfoHolder = processBarrelTrack(collisionID, collisionBC, trackIndex, data, bcsMap);
-          if(!extraInfoHolder.isTPConly && mTrackQCKeepGlobalTracks){
+          if (!extraInfoHolder.isTPConly && mTrackQCKeepGlobalTracks) {
             writeQAData = true;
           }
 
